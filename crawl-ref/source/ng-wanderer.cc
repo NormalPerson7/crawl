@@ -14,6 +14,8 @@
 #include "skills.h"
 #include "spl-book.h" // you_can_memorise
 #include "spl-util.h"
+#include "unicode.h"
+#include "stringutil.h"
 
 static void _give_wanderer_weapon(skill_type wpn_skill, bool good_item)
 {
@@ -104,7 +106,7 @@ static void _give_wanderer_weapon(skill_type wpn_skill, bool good_item)
     newgame_make_item(OBJ_WEAPONS, sub_type, 1, plus, ego);
 }
 
-static void _assign_wanderer_stats(skill_type sk1, skill_type sk2,
+static vector<int> _get_wanderer_stats(skill_type sk1, skill_type sk2,
                                     skill_type sk3)
 {
     skill_type skills[] = {sk1, sk2, sk3};
@@ -163,15 +165,28 @@ static void _assign_wanderer_stats(skill_type sk1, skill_type sk2,
                 break;
         }
     }
+    vector<int> ret = {0, 0, 0};
 
     for (int i = 0; i < 12; i++)
     {
         const auto stat = random_choose_weighted(
-                you.base_stats[STAT_STR] > 17 ? 1 : 2 + 2*str_count, STAT_STR,
-                you.base_stats[STAT_INT] > 17 ? 1 : 2 + 2*int_count, STAT_INT,
-                you.base_stats[STAT_DEX] > 17 ? 1 : 2 + 2*dex_count, STAT_DEX);
-            you.base_stats[stat]++;
+            ret[STAT_STR] > 17 - you.base_stats[STAT_STR] ? 1 : 2 + 2*str_count, STAT_STR,
+            ret[STAT_INT] > 17 - you.base_stats[STAT_INT] ? 1 : 2 + 2*int_count, STAT_INT,
+            ret[STAT_DEX] > 17 - you.base_stats[STAT_DEX] ? 1 : 2 + 2*dex_count, STAT_DEX);
+        ret[stat]++;
     }
+
+    return ret;
+}
+
+static void _assign_wanderer_stats(skill_type sk1, skill_type sk2,
+                                  skill_type sk3)
+{
+    vector<int> stats = _get_wanderer_stats(sk1, sk2, sk3);
+    you.base_stats[STAT_STR] += stats[0];
+    you.base_stats[STAT_INT] += stats[1];
+    you.base_stats[STAT_DEX] += stats[2];
+
 }
 
 static skill_type _apt_weighted_choice(const skill_type * skill_array,
@@ -852,6 +867,52 @@ static void _handle_start_spells(const set<spell_type> &spells)
         add_spell_to_memory(to_memorise);
 }
 
+static void _debug_wn_stats_and_skills()
+{
+    const int NUM_ITERS = 1000000;
+    const float NUM_ITERS_F = static_cast<float>(NUM_ITERS);
+    int good_skills[NUM_SKILLS] = {0};
+    int decent_skills[NUM_SKILLS] = {0};
+    int sums[NUM_STATS] = {0};
+    int maxs[NUM_STATS] = {0};
+    int mins[NUM_STATS] = {0};
+    for (int i = 0; i < NUM_ITERS; i++)
+    {
+        skill_type sk1 = _wanderer_role_skill_select(one_chance_in(3));
+        skill_type sk2 = _wanderer_role_skill_select(false);
+        skill_type sk3 = _wanderer_role_skill_select(true);
+        good_skills[sk1] += 1;
+        decent_skills[sk2] += 1;
+        decent_skills[sk3] += 1;
+        vector<int> stats = _get_wanderer_stats(sk1, sk2, sk3);
+        for (int j = 0; j < NUM_STATS; j++)
+        {
+            sums[j] += stats[j];
+            maxs[j] = max(maxs[j], stats[j]);
+            mins[j] = min(mins[j], stats[j]);
+        }
+    }
+
+    for (int i = 0; i < NUM_SKILLS; i++)
+    {
+        skill_type sk = static_cast<skill_type>(i);
+        if (is_removed_skill(sk))
+            continue;
+
+        string good = chop_string(make_stringf("%d", good_skills[sk]), 7);
+        string decent = chop_string(make_stringf("%d", decent_skills[sk]), 7);
+
+        mprf("%s %d %d", skill_name(sk), good_skills[sk], decent_skills[sk]);
+    }
+
+    mprf("Str : max %d, min %d, avg %f\n", maxs[STAT_STR], mins[STAT_STR],
+         sums[STAT_STR] / NUM_ITERS_F);
+    mprf("Int : max %d, min %d, avg %f\n", maxs[STAT_INT], mins[STAT_INT],
+         sums[STAT_INT] / NUM_ITERS_F);
+    mprf("Dex : max %d, min %d, avg %f\n", maxs[STAT_DEX], mins[STAT_DEX],
+         sums[STAT_DEX] / NUM_ITERS_F);
+}
+
 // New style wanderers are supposed to be decent in terms of skill
 // levels/equipment, but pretty randomised.
 void create_wanderer()
@@ -861,6 +922,8 @@ void create_wanderer()
     rng::subgenerator wn_rng;
     if (you.char_class != JOB_WANDERER)
         return;
+
+    _debug_wn_stats_and_skills();
     // Keep track of what skills we got items from, mostly to prevent
     // giving a good and then a normal version of the same weapon.
     set<skill_type> gift_skills;
