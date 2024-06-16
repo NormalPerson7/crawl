@@ -109,6 +109,23 @@ static void _give_wanderer_weapon(skill_type wpn_skill, bool good_item)
     newgame_make_item(OBJ_WEAPONS, sub_type, 1, plus, ego);
 }
 
+static void _give_wanderer_matching_magical_staff(skill_type magic_skill)
+{
+    const map<skill_type, stave_type> skills_to_staves =
+    {
+        { SK_CONJURATIONS, STAFF_CONJURATION },
+        { SK_NECROMANCY,   STAFF_DEATH       },
+        { SK_FIRE_MAGIC,   STAFF_FIRE        },
+        { SK_ICE_MAGIC,    STAFF_COLD        },
+        { SK_AIR_MAGIC,    STAFF_AIR         },
+        { SK_EARTH_MAGIC,  STAFF_EARTH       },
+        { SK_ALCHEMY,      STAFF_ALCHEMY     }
+    };
+
+    newgame_make_item(OBJ_STAVES, skills_to_staves.at(magic_skill));
+
+}
+
 static vector<int> _get_wanderer_stats(skill_type sk1, skill_type sk2,
                                     skill_type sk3)
 {
@@ -233,6 +250,20 @@ static bool _is_useful_skill(skill_type skill, skill_type sk1, skill_type sk2)
     // Reroll decent staves skill, as no corresponding appropriate equipment
     if (skill == SK_STAVES && sk1 != SK_NONE)
         return false;
+
+    const skill_type staff_skills[] =
+        { SK_CONJURATIONS, SK_NECROMANCY, SK_FIRE_MAGIC, SK_ICE_MAGIC,
+          SK_AIR_MAGIC, SK_EARTH_MAGIC, SK_ALCHEMY };
+
+    // Reroll decent staves unless we got a matchingn magic skill
+    // to give a magical staff for
+    if (skill == SK_STAVES && sk1 != SK_NONE)
+    {
+        const skill_type *found
+            = find(begin(staff_skills), end(staff_skills), sk1);
+        if (found == end(staff_skills))
+            return false;
+    }
 
     // Don't give a shield with good staves / ranged weapons
     // (except for formicids, obviously)
@@ -758,16 +789,15 @@ static vector<spell_type> _wanderer_good_equipment(skill_type skill)
 }
 
 static vector<spell_type> _wanderer_decent_equipment(skill_type skill,
-                                                     set<skill_type> & gift_skills)
+                                                     skill_type good_skill)
 {
 
     // don't give the player a second piece of armour
     // - give a decent consumable instead
     // we still want the player to get the skill levels, though
-    if (gift_skills.count(SK_ARMOUR) && (skill == SK_DODGING
-                                         || skill == SK_STEALTH)
-        || (gift_skills.count(SK_DODGING) && (skill == SK_ARMOUR
-                                              || skill == SK_STEALTH)))
+    if (good_skill == SK_ARMOUR && (skill == SK_DODGING || skill == SK_STEALTH)
+        || good_skill == SK_DODGING && (skill == SK_ARMOUR
+                                        || skill == SK_STEALTH))
     {
         skill = SK_NONE;
     }
@@ -779,11 +809,13 @@ static vector<spell_type> _wanderer_decent_equipment(skill_type skill,
     case SK_POLEARMS:
     case SK_RANGED_WEAPONS:
     case SK_THROWING:
-    case SK_STAVES:
     case SK_SHORT_BLADES:
     case SK_LONG_BLADES:
         _give_wanderer_weapon(skill, false);
         break;
+
+    case SK_STAVES:
+        _give_wanderer_matching_magical_staff(good_skill);
 
     case SK_ARMOUR:
         // Dragon scales/tla is too good for "decent" quality
@@ -952,9 +984,6 @@ void create_wanderer()
         return;
 
     _debug_wn_stats_and_skills();
-    // Keep track of what skills we got items from, mostly to prevent
-    // giving a good and then a normal version of the same weapon.
-    set<skill_type> gift_skills;
 
     // always give at least one "offense skill" and one "defence skill"
     skill_type gift_skill_1 = _wanderer_role_skill_select(one_chance_in(3));
@@ -971,12 +1000,8 @@ void create_wanderer()
 
     set<spell_type> spells;
     _add_spells(spells, _wanderer_good_equipment(gift_skill_1));
-    gift_skills.insert(gift_skill_1);
-
-    _add_spells(spells, _wanderer_decent_equipment(gift_skill_2, gift_skills));
-    gift_skills.insert(gift_skill_2);
-    _add_spells(spells, _wanderer_decent_equipment(gift_skill_3, gift_skills));
-    gift_skills.insert(gift_skill_3);
+    _add_spells(spells, _wanderer_decent_equipment(gift_skill_2, gift_skill_1));
+    _add_spells(spells, _wanderer_decent_equipment(gift_skill_3, gift_skill_1));
 
     // Give out an extra consumable, to ensure we have some kind of early game
     // tactical option.
