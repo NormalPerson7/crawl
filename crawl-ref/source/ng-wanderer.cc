@@ -227,13 +227,13 @@ static bool _is_useful_skill(skill_type skill, skill_type sk1, skill_type sk2)
     if (skill == sk1 || skill == sk2)
         return false;
 
-    // Don't give a shield if we filled our hands already
-    // or if we got a sling (likely to upgrade to a bow later)
+    // Don't give a shield with good staves / ranged weapons
     // (except for formicids, obviously)
     if (!you.has_mutation(MUT_QUADRUMANOUS)
         && skill == SK_SHIELDS
-        && (!you.has_usable_offhand() || sk1 == SK_RANGED_WEAPONS
-            || sk2 == SK_RANGED_WEAPONS))
+        && (sk1 == SK_STAVES
+            || sk1 == SK_RANGED_WEAPONS || sk2 == SK_RANGED_WEAPONS
+            || sk1 == SK_POLEARMS && you.body_size() <= SIZE_SMALL))
     {
         return false;
     }
