@@ -232,7 +232,8 @@ static bool _is_useful_skill(skill_type skill, skill_type sk1, skill_type sk2)
     // (except for formicids, obviously)
     if (!you.has_mutation(MUT_QUADRUMANOUS)
         && skill == SK_SHIELDS
-        && (!you.has_usable_offhand() || sk1 == SK_RANGED_WEAPONS || sk2 == SK_RANGED_WEAPONS))
+        && (!you.has_usable_offhand() || sk1 == SK_RANGED_WEAPONS
+            || sk2 == SK_RANGED_WEAPONS))
     {
         return false;
     }
@@ -951,7 +952,8 @@ void create_wanderer()
     // always give at least one "offense skill" and one "defence skill"
     skill_type gift_skill_1 = _wanderer_role_skill_select(one_chance_in(3));
     skill_type gift_skill_2 = _wanderer_role_skill_select(false, gift_skill_1);
-    skill_type gift_skill_3 = _wanderer_role_skill_select(true, gift_skill_1, gift_skill_2);
+    skill_type gift_skill_3 = _wanderer_role_skill_select(true, gift_skill_1,
+                                                          gift_skill_2);
 
     // assign remaining wanderer stat points according to gift skills
     _assign_wanderer_stats(gift_skill_1, gift_skill_2, gift_skill_3);
