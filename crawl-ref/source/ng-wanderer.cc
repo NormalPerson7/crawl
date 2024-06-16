@@ -893,8 +893,8 @@ static void _debug_wn_stats_and_skills()
     for (int i = 0; i < NUM_ITERS; i++)
     {
         skill_type sk1 = _wanderer_role_skill_select(one_chance_in(3));
-        skill_type sk2 = _wanderer_role_skill_select(false);
-        skill_type sk3 = _wanderer_role_skill_select(true);
+        skill_type sk2 = _wanderer_role_skill_select(false, sk1);
+        skill_type sk3 = _wanderer_role_skill_select(true, sk1, sk2);
         good_skills[sk1] += 1;
         decent_skills[sk2] += 1;
         decent_skills[sk3] += 1;
