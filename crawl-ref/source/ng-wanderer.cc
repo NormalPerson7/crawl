@@ -78,7 +78,10 @@ static void _give_wanderer_weapon(skill_type wpn_skill, bool good_item)
         break;
 
     case SK_STAVES:
+        // We only reach here for good quality staves skill.
+        // A +0 quarterstaff is plenty good enough for good staves skill.
         sub_type = WPN_QUARTERSTAFF;
+        upgrade_base = false;
         break;
 
     case SK_RANGED_WEAPONS:
@@ -225,6 +228,10 @@ static bool _is_useful_skill(skill_type skill, skill_type sk1, skill_type sk2)
 {
     // Reroll duplicate skills
     if (skill == sk1 || skill == sk2)
+        return false;
+
+    // Reroll decent staves skill, as no corresponding appropriate equipment
+    if (skill == SK_STAVES && sk1 != SK_NONE)
         return false;
 
     // Don't give a shield with good staves / ranged weapons
