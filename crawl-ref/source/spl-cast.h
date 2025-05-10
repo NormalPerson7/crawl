@@ -62,7 +62,7 @@ enum class spflag
     holy               = 0x40000000,      // considered holy (can't be
                                           // used by Yred bound souls)
 };
-DEF_BITFIELD(spell_flags, spflag);
+DEF_BITFIELD(spell_flags, spflag, 31);
 
 enum class spret
 {

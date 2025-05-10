@@ -155,6 +155,8 @@
 #include "xom.h" // XOM_CLOUD_TRAIL_TYPE_KEY
 #include "zot.h"
 
+#include "wiki-spell-table.cc"
+
 // ----------------------------------------------------------------------
 // Globals whose construction/destruction order needs to be managed
 // ----------------------------------------------------------------------
@@ -418,6 +420,8 @@ static void _launch_game_loop()
 NORETURN static void _launch_game()
 {
     const bool game_start = startup_step();
+
+    wiki_table_of_spells();
 
     // Attach the macro key recorder
     remove_key_recorder(&repeat_again_rec);

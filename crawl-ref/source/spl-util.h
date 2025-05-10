@@ -13,6 +13,8 @@
 
 using std::vector;
 
+struct spell_desc;
+
 enum class spschool
 {
   none           = 0,
@@ -51,6 +53,8 @@ enum spell_highlight_colours
     COL_FORBIDDEN    = LIGHTRED,    // The player's god hates this ability
     COL_DANGEROUS    = LIGHTRED,    // ability/spell use could be dangerous
 };
+
+const spell_desc *_seekspell(spell_type spell);
 
 bool is_valid_spell(spell_type spell);
 void init_spell_descs();

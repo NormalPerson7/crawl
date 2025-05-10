@@ -96,7 +96,7 @@ static vector<int> &_get_spell_list()
 
 #define SPELLDATASIZE ARRAYSZ(spelldata)
 
-static const struct spell_desc *_seekspell(spell_type spellid);
+const struct spell_desc *_seekspell(spell_type spellid);
 
 //
 //             BEGIN PUBLIC FUNCTIONS
@@ -998,7 +998,7 @@ spschool skill2spell_type(skill_type spell_skill)
  */
 
 //jmf: Simplified; moved init code to top function, init_spell_descs().
-static const spell_desc *_seekspell(spell_type spell)
+const spell_desc *_seekspell(spell_type spell)
 {
     ASSERT_RANGE(spell, 0, NUM_SPELLS);
     const int index = _get_spell_list()[spell];
